@@ -49,13 +49,13 @@ export default async function AdminPage({
     const stats = {
         total: users.length,
         active: users.filter(
-            (u) =>
+            (u: typeof users[0]) =>
                 u.membership?.status === 'ACTIVE' &&
                 u.membership.expiryDate &&
                 new Date(u.membership.expiryDate) > new Date()
         ).length,
         inactive: users.filter(
-            (u) =>
+            (u: typeof users[0]) =>
                 !u.membership ||
                 u.membership.status === 'INACTIVE' ||
                 (u.membership.expiryDate && new Date(u.membership.expiryDate) <= new Date())
