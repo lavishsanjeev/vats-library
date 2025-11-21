@@ -140,7 +140,7 @@ export default async function AdminPage({
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                                {users.map((member) => {
+                                {users.map((member: typeof users[0]) => {
                                     const isActive =
                                         member.membership?.status === 'ACTIVE' &&
                                         member.membership.expiryDate &&
