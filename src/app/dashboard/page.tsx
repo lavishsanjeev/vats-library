@@ -150,7 +150,7 @@ export default async function DashboardPage() {
                             <h2 className="text-xl font-semibold mb-4">Payment History</h2>
                             {dbUser.payments.length > 0 ? (
                                 <div className="space-y-3">
-                                    {dbUser.payments.map((payment) => (
+                                    {dbUser.payments.map((payment: any) => (
                                         <div
                                             key={payment.id}
                                             className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg"
