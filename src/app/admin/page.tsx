@@ -6,7 +6,7 @@ import { Search, Users, CheckCircle, XCircle } from 'lucide-react';
 export default async function AdminPage({
     searchParams,
 }: {
-    searchParams: { search?: string };
+    searchParams: Promise<{ search?: string }>;
 }) {
     const { userId } = await auth();
     const user = await currentUser();
@@ -25,7 +25,8 @@ export default async function AdminPage({
     }
 
     // Get all users with their memberships
-    const searchQuery = searchParams.search || '';
+    const { search } = await searchParams;
+    const searchQuery = search || '';
     const users = await prisma.user.findMany({
         where: searchQuery
             ? {

@@ -40,7 +40,7 @@ export default function GPayButton() {
     };
 
     return (
-        <div className="w-full max-w-[300px]">
+        <div className="w-full max-w-[300px] mx-auto">
             {loading ? (
                 <div className="h-[40px] bg-secondary animate-pulse rounded-full flex items-center justify-center text-sm text-muted-foreground">
                     Processing...

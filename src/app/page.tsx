@@ -3,7 +3,7 @@ import { CheckCircle, Clock, Wifi, Coffee, Shield, Zap, ArrowRight } from 'lucid
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-[#030014] overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-[#030014]/80 overflow-hidden">
       {/* Hero Section */}
       <section className="relative pt-32 pb-32 md:pt-40 md:pb-48">
         {/* Background Grid & Glow */}
