@@ -2,7 +2,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import DigitalPass from '@/components/DigitalPass';
-import GPayButton from '@/components/GPayButton';
+import UPIPayment from '@/components/UPIPayment';
 import DashboardRedirect from '@/components/DashboardRedirect';
 import { Calendar, CreditCard, IndianRupee } from 'lucide-react';
 
@@ -49,7 +49,7 @@ export default async function DashboardPage() {
         new Date(membership.expiryDate) > new Date();
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 max-w-full overflow-x-hidden">
             <DashboardRedirect />
             <div className="max-w-6xl mx-auto">
                 <h1 className="text-3xl font-bold mb-2">My Dashboard</h1>
@@ -112,9 +112,9 @@ export default async function DashboardPage() {
                                         Valid for 30 days from payment date
                                     </p>
                                 </div>
-                                <GPayButton />
+                                <UPIPayment />
                                 <p className="text-xs text-muted-foreground text-center">
-                                    Secure payment via Google Pay (UPI)
+                                    Scan QR to Pay & Verify
                                 </p>
                             </div>
                         </div>

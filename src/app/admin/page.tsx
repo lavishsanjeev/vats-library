@@ -2,6 +2,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { Search, Users, CheckCircle, XCircle } from 'lucide-react';
+import PaymentApprovals from '@/components/admin/PaymentApprovals';
 
 export default async function AdminPage({
     searchParams,
@@ -63,6 +64,13 @@ export default async function AdminPage({
         ).length,
     };
 
+    // Get pending payments
+    const pendingPayments = await prisma.payment.findMany({
+        where: { status: 'PENDING' },
+        include: { user: true },
+        orderBy: { createdAt: 'desc' },
+    });
+
     return (
         <div className="min-h-screen p-4 md:p-8 pb-20">
             <div className="max-w-7xl mx-auto space-y-8">
@@ -123,6 +131,9 @@ export default async function AdminPage({
                         </div>
                     </div>
                 </div>
+
+                {/* Payment Approvals Section */}
+                <PaymentApprovals payments={pendingPayments} />
 
                 {/* Search & Filter */}
                 <div className="bg-card/30 backdrop-blur-md border border-white/10 rounded-xl p-4">

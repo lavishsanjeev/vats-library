@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { CheckCircle, Clock, Wifi, Coffee, Shield, Zap, ArrowRight } from 'lucide-react';
+import JoinButton from '@/components/JoinButton';
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-[#030014]/80 overflow-hidden">
       {/* Hero Section */}
-      <section className="relative pt-32 pb-32 md:pt-40 md:pb-48">
+      <section className="relative pt-24 pb-20 md:pt-40 md:pb-48">
         {/* Background Grid & Glow */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-grid-white opacity-20" />
@@ -21,7 +22,7 @@ export default function Home() {
             Now Open 24/7
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 glow-text hero-text">
+          <h1 className="text-4xl md:text-7xl font-bold tracking-tight mb-8 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 glow-text hero-text px-4">
             Transform How You <br />
             <span className="text-primary">Excellence</span> Your Studies
           </h1>
@@ -83,7 +84,7 @@ export default function Home() {
           </h2>
           <p className="text-gray-400 mb-12">No hidden charges. Just one plan for everything.</p>
 
-          <div className="max-w-md mx-auto bg-[#0a0a0a] border border-white/10 rounded-2xl p-8 glow-container relative overflow-hidden group hover:border-primary/50 transition-colors duration-500">
+          <div className="w-full max-w-md mx-auto bg-[#0a0a0a] border border-white/10 rounded-2xl p-8 glow-container relative overflow-hidden group hover:border-primary/50 transition-colors duration-500">
             <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
               POPULAR
             </div>
@@ -123,13 +124,7 @@ export default function Home() {
               </li>
             </ul>
 
-            <Link
-              href="/dashboard"
-              className="btn-3d bg-white text-black h-12 w-full rounded-xl flex items-center justify-center font-bold transition-all relative z-10 hover:bg-gray-100"
-              style={{ boxShadow: '0px 10px 0px 0px #9ca3af, 0px 10px 20px rgba(0,0,0,0.4)' }}
-            >
-              Join Now
-            </Link>
+            <JoinButton />
           </div>
         </div>
       </section>
