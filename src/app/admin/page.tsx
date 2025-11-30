@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { Search, Users, CheckCircle, XCircle } from 'lucide-react';
 import PaymentApprovals from '@/components/admin/PaymentApprovals';
+import WiFiSettings from '@/components/admin/WiFiSettings';
 
 export default async function AdminPage({
     searchParams,
@@ -131,6 +132,9 @@ export default async function AdminPage({
                         </div>
                     </div>
                 </div>
+
+                {/* WiFi Settings Section */}
+                <WiFiSettings />
 
                 {/* Payment Approvals Section */}
                 <PaymentApprovals payments={pendingPayments} />

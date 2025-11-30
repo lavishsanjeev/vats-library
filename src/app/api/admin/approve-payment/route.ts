@@ -50,6 +50,11 @@ export async function POST(req: Request) {
             },
         });
 
+        // Get WiFi password from settings
+        const wifiSetting = await prisma.settings.findUnique({
+            where: { key: 'WIFI_PASSWORD' },
+        });
+
         // Send Email to User
         if (payment.user.email) {
             const transporter = nodemailer.createTransport({
@@ -72,6 +77,24 @@ export async function POST(req: Request) {
                         <p>Hello ${payment.user.name},</p>
                         <p>Your payment of <strong>₹${payment.amount}</strong> has been verified and your membership is now <strong>ACTIVE</strong>.</p>
                         <p>You can now access the library 24/7. Your digital pass is available in your dashboard.</p>
+                        
+                        ${wifiSetting?.value ? `
+                        <div style="background-color: #f0f9ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                            <h3 style="color: #1e40af; margin-top: 0; display: flex; align-items: center;">
+                                📶 WiFi Access Details
+                            </h3>
+                            <div style="background-color: white; padding: 15px; border-radius: 5px; margin-top: 10px;">
+                                <p style="margin: 5px 0; color: #64748b; font-size: 14px;">WiFi Password:</p>
+                                <p style="margin: 5px 0; font-size: 18px; font-weight: bold; color: #1e293b; font-family: 'Courier New', monospace; letter-spacing: 1px;">
+                                    ${wifiSetting.value}
+                                </p>
+                            </div>
+                            <p style="margin-top: 15px; font-size: 13px; color: #64748b;">
+                                💡 Connect to the library WiFi network using this password for high-speed internet access.
+                            </p>
+                        </div>
+                        ` : ''}
+                        
                         <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" style="display: inline-block; background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px;">Go to Dashboard</a>
                     </div>
                 `,
