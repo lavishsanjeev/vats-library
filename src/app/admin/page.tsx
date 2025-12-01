@@ -1,7 +1,7 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { Search, Users, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Users, CheckCircle, XCircle, IndianRupee } from 'lucide-react';
 import PaymentApprovals from '@/components/admin/PaymentApprovals';
 import WiFiSettings from '@/components/admin/WiFiSettings';
 
@@ -65,6 +65,23 @@ export default async function AdminPage({
         ).length,
     };
 
+    // Calculate Monthly Revenue
+    const currentMonthStart = new Date();
+    currentMonthStart.setDate(1);
+    currentMonthStart.setHours(0, 0, 0, 0);
+
+    const monthlyRevenue = await prisma.payment.aggregate({
+        _sum: {
+            amount: true,
+        },
+        where: {
+            status: 'SUCCESS',
+            createdAt: {
+                gte: currentMonthStart,
+            },
+        },
+    });
+
     // Get pending payments
     const pendingPayments = await prisma.payment.findMany({
         where: { status: 'PENDING' },
@@ -92,7 +109,7 @@ export default async function AdminPage({
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="group relative overflow-hidden bg-card/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 transition-all hover:bg-card/80">
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                             <Users className="h-24 w-24" />
@@ -129,6 +146,17 @@ export default async function AdminPage({
                                 className="h-full bg-red-500 transition-all duration-500"
                                 style={{ width: `${stats.total ? (stats.inactive / stats.total) * 100 : 0}%` }}
                             />
+                        </div>
+                    </div>
+
+                    <div className="group relative overflow-hidden bg-card/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 transition-all hover:bg-card/80">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <IndianRupee className="h-24 w-24 text-yellow-500" />
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground">Monthly Revenue</p>
+                        <p className="text-4xl font-bold mt-2 text-yellow-500">₹{monthlyRevenue._sum.amount || 0}</p>
+                        <div className="mt-4 h-1 w-full bg-secondary rounded-full overflow-hidden">
+                            <div className="h-full bg-yellow-500 w-full" />
                         </div>
                     </div>
                 </div>
