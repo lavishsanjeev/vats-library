@@ -30,11 +30,11 @@ export default function Footer() {
                         <ul className="space-y-2 text-sm text-muted-foreground">
                             <li className="flex items-center gap-2">
                                 <MapPin className="h-4 w-4" />
-                                <span>123 Student Lane, Study City</span>
+                                <span>442 , kamalpur brahman chopal</span>
                             </li>
                             <li className="flex items-center gap-2">
                                 <Phone className="h-4 w-4" />
-                                <span>+91 98765 43210</span>
+                                <span>+91 82952 95283</span>
                             </li>
                             <li className="flex items-center gap-2">
                                 <Mail className="h-4 w-4" />

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import nodemailer from 'nodemailer';
+import { getInvoiceHtml } from '@/lib/invoice-template';
+import { generateInvoicePdf } from '@/lib/invoice-generator';
 
 export async function POST(req: Request) {
     try {
@@ -55,6 +57,25 @@ export async function POST(req: Request) {
             where: { key: 'WIFI_PASSWORD' },
         });
 
+        // Generate Invoice
+        let pdfBuffer: Buffer | null = null;
+        try {
+            const invoiceHtml = getInvoiceHtml({
+                invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+                date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                userName: payment.user.name || 'Valued Member',
+                userEmail: payment.user.email,
+                userClerkId: payment.user.clerkId,
+                amount: payment.amount,
+                periodStart: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                periodEnd: expiryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            });
+            pdfBuffer = await generateInvoicePdf(invoiceHtml);
+        } catch (err) {
+            console.error('Error generating invoice PDF:', err);
+            // Continue without invoice if generation fails, but log it
+        }
+
         // Send Email to User
         if (payment.user.email) {
             const transporter = nodemailer.createTransport({
@@ -67,6 +88,7 @@ export async function POST(req: Request) {
                 },
             });
 
+            // 1. Send Membership Approval & WiFi Email
             await transporter.sendMail({
                 from: process.env.SMTP_EMAIL,
                 to: payment.user.email,
@@ -95,10 +117,36 @@ export async function POST(req: Request) {
                         </div>
                         ` : ''}
                         
+                        <p>You will receive a separate email with your invoice shortly.</p>
+
                         <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" style="display: inline-block; background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px;">Go to Dashboard</a>
                     </div>
                 `,
             });
+
+            // 2. Send Invoice Email
+            if (pdfBuffer) {
+                await transporter.sendMail({
+                    from: process.env.SMTP_EMAIL,
+                    to: payment.user.email,
+                    subject: 'Invoice - Vats Library',
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                            <h2 style="color: #4f46e5;">Payment Invoice</h2>
+                            <p>Hello ${payment.user.name},</p>
+                            <p>Please find attached the invoice for your recent membership payment.</p>
+                            <p>Thank you for choosing Vats Library!</p>
+                        </div>
+                    `,
+                    attachments: [
+                        {
+                            filename: 'Invoice.pdf',
+                            content: pdfBuffer,
+                            contentType: 'application/pdf',
+                        },
+                    ],
+                });
+            }
         }
 
         return NextResponse.json({ success: true });
