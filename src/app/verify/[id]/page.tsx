@@ -20,7 +20,7 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
 
     if (!user) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-black/50 flex items-center justify-center p-4">
                 <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center space-y-6">
                     <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
                         <XCircle className="w-8 h-8 text-red-600" />
@@ -48,7 +48,7 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
     const isValid = isActive && !isExpired;
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-black/50 flex items-center justify-center p-4">
             <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-md w-full">
                 {/* Header Status */}
                 <div className={`px-8 py-10 text-center ${isValid ? 'bg-green-600' : 'bg-red-600'}`}>

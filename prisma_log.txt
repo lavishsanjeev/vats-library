@@ -1,6 +1,0 @@
-Environment variables loaded from .env
-Prisma schema loaded from prisma\schema.prisma
-Datasource "db": MongoDB database "vats-library" at "cluster0.cbof4jq.mongodb.net"
-Error: Iterating on one schema using re-introspection with db pull is currently not supported with MongoDB provider.
-You can explicitly ignore and override your current local schema file with npx prisma db pull --force
-Some information will be lost (relations, comments, mapped fields, @ignore...), follow https://github.com/prisma/prisma/issues/9585 for more info.

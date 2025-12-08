@@ -1,12 +1,14 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { Search, Users, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Users, CheckCircle, XCircle, IndianRupee } from 'lucide-react';
+import PaymentApprovals from '@/components/admin/PaymentApprovals';
+import WiFiSettings from '@/components/admin/WiFiSettings';
 
 export default async function AdminPage({
     searchParams,
 }: {
-    searchParams: { search?: string };
+    searchParams: Promise<{ search?: string }>;
 }) {
     const { userId } = await auth();
     const user = await currentUser();
@@ -25,7 +27,8 @@ export default async function AdminPage({
     }
 
     // Get all users with their memberships
-    const searchQuery = searchParams.search || '';
+    const { search } = await searchParams;
+    const searchQuery = search || '';
     const users = await prisma.user.findMany({
         where: searchQuery
             ? {
@@ -49,172 +52,303 @@ export default async function AdminPage({
     const stats = {
         total: users.length,
         active: users.filter(
-            (u) =>
+            (u: typeof users[0]) =>
                 u.membership?.status === 'ACTIVE' &&
                 u.membership.expiryDate &&
                 new Date(u.membership.expiryDate) > new Date()
         ).length,
         inactive: users.filter(
-            (u) =>
+            (u: typeof users[0]) =>
                 !u.membership ||
                 u.membership.status === 'INACTIVE' ||
                 (u.membership.expiryDate && new Date(u.membership.expiryDate) <= new Date())
         ).length,
     };
 
-    return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="max-w-7xl mx-auto">
-                <h1 className="text-3xl font-bold mb-2">Admin Panel</h1>
-                <p className="text-muted-foreground mb-8">
-                    Manage library members and memberships
-                </p>
+    // Calculate Monthly Revenue
+    const currentMonthStart = new Date();
+    currentMonthStart.setDate(1);
+    currentMonthStart.setHours(0, 0, 0, 0);
 
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <div className="bg-card border border-border rounded-lg p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Total Members</p>
-                                <p className="text-3xl font-bold mt-1">{stats.total}</p>
-                            </div>
-                            <Users className="h-10 w-10 text-primary opacity-50" />
+    const monthlyRevenue = await prisma.payment.aggregate({
+        _sum: {
+            amount: true,
+        },
+        where: {
+            status: 'SUCCESS',
+            createdAt: {
+                gte: currentMonthStart,
+            },
+        },
+    });
+
+    // Get pending payments
+    const pendingPayments = await prisma.payment.findMany({
+        where: { status: 'PENDING' },
+        include: { user: true },
+        orderBy: { createdAt: 'desc' },
+    });
+
+    return (
+        <div className="min-h-screen p-4 md:p-8 pb-20">
+            <div className="max-w-7xl mx-auto space-y-8">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                            Admin Dashboard
+                        </h1>
+                        <p className="text-muted-foreground mt-1">
+                            Manage library members and monitor activity
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2 bg-secondary/50 px-4 py-2 rounded-full border border-white/5">
+                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-sm font-medium">System Operational</span>
+                    </div>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="group relative overflow-hidden bg-card/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 transition-all hover:bg-card/80">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <Users className="h-24 w-24" />
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground">Total Members</p>
+                        <p className="text-4xl font-bold mt-2">{stats.total}</p>
+                        <div className="mt-4 h-1 w-full bg-secondary rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 w-full" />
                         </div>
                     </div>
-                    <div className="bg-card border border-border rounded-lg p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Active Members</p>
-                                <p className="text-3xl font-bold mt-1 text-green-600">{stats.active}</p>
-                            </div>
-                            <CheckCircle className="h-10 w-10 text-green-600 opacity-50" />
+
+                    <div className="group relative overflow-hidden bg-card/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 transition-all hover:bg-card/80">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <CheckCircle className="h-24 w-24 text-green-500" />
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground">Active Memberships</p>
+                        <p className="text-4xl font-bold mt-2 text-green-500">{stats.active}</p>
+                        <div className="mt-4 h-1 w-full bg-secondary rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-green-500 transition-all duration-500"
+                                style={{ width: `${stats.total ? (stats.active / stats.total) * 100 : 0}%` }}
+                            />
                         </div>
                     </div>
-                    <div className="bg-card border border-border rounded-lg p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Inactive Members</p>
-                                <p className="text-3xl font-bold mt-1 text-muted-foreground">
-                                    {stats.inactive}
-                                </p>
-                            </div>
-                            <XCircle className="h-10 w-10 text-muted-foreground opacity-50" />
+
+                    <div className="group relative overflow-hidden bg-card/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 transition-all hover:bg-card/80">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <XCircle className="h-24 w-24 text-red-500" />
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground">Inactive / Expired</p>
+                        <p className="text-4xl font-bold mt-2 text-muted-foreground">{stats.inactive}</p>
+                        <div className="mt-4 h-1 w-full bg-secondary rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-red-500 transition-all duration-500"
+                                style={{ width: `${stats.total ? (stats.inactive / stats.total) * 100 : 0}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="group relative overflow-hidden bg-card/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 transition-all hover:bg-card/80">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <IndianRupee className="h-24 w-24 text-yellow-500" />
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground">Monthly Revenue</p>
+                        <p className="text-4xl font-bold mt-2 text-yellow-500">₹{monthlyRevenue._sum.amount || 0}</p>
+                        <div className="mt-4 h-1 w-full bg-secondary rounded-full overflow-hidden">
+                            <div className="h-full bg-yellow-500 w-full" />
                         </div>
                     </div>
                 </div>
 
-                {/* Search */}
-                <div className="bg-card border border-border rounded-lg p-6 mb-6">
-                    <form method="GET" className="flex gap-2">
+                {/* WiFi Settings Section */}
+                <WiFiSettings />
+
+                {/* Payment Approvals Section */}
+                <PaymentApprovals payments={pendingPayments} />
+
+                {/* Search & Filter */}
+                <div className="bg-card/30 backdrop-blur-md border border-white/10 rounded-xl p-4">
+                    <form method="GET" className="relative flex items-center gap-2">
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                             <input
                                 type="text"
                                 name="search"
-                                placeholder="Search by name, email, or member ID..."
+                                placeholder="Search members by name, email, or ID..."
                                 defaultValue={searchQuery}
-                                className="w-full h-10 pl-10 pr-4 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                                className="w-full h-12 pl-12 pr-4 bg-background/50 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                             />
                         </div>
                         <button
                             type="submit"
-                            className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 rounded-md font-medium transition-colors"
+                            className="h-12 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-all flex items-center gap-2"
                         >
-                            Search
+                            <Search className="h-4 w-4" />
+                            <span className="hidden sm:inline">Search</span>
                         </button>
                     </form>
                 </div>
 
-                {/* Members Table */}
-                <div className="bg-card border border-border rounded-lg overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-secondary">
-                                <tr>
-                                    <th className="text-left p-4 font-semibold text-sm">Member</th>
-                                    <th className="text-left p-4 font-semibold text-sm">Member ID</th>
-                                    <th className="text-left p-4 font-semibold text-sm">Status</th>
-                                    <th className="text-left p-4 font-semibold text-sm">Expiry Date</th>
-                                    <th className="text-left p-4 font-semibold text-sm">Last Payment</th>
-                                    <th className="text-left p-4 font-semibold text-sm">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                                {users.map((member) => {
-                                    const isActive =
-                                        member.membership?.status === 'ACTIVE' &&
-                                        member.membership.expiryDate &&
-                                        new Date(member.membership.expiryDate) > new Date();
+                {/* Content Area */}
+                <div className="space-y-4">
+                    <h2 className="text-xl font-semibold px-1">Member Directory</h2>
 
-                                    return (
-                                        <tr key={member.id} className="hover:bg-secondary/50">
-                                            <td className="p-4">
-                                                <div>
-                                                    <p className="font-medium">{member.name}</p>
-                                                    <p className="text-sm text-muted-foreground">{member.email}</p>
-                                                </div>
-                                            </td>
-                                            <td className="p-4">
-                                                <code className="text-xs bg-secondary px-2 py-1 rounded">
-                                                    {member.id.slice(-8).toUpperCase()}
-                                                </code>
-                                            </td>
-                                            <td className="p-4">
-                                                <span
-                                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${isActive
-                                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                        : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                                                        }`}
-                                                >
-                                                    {isActive ? (
-                                                        <>
-                                                            <CheckCircle className="h-3 w-3" />
-                                                            Active
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <XCircle className="h-3 w-3" />
-                                                            Inactive
-                                                        </>
-                                                    )}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 text-sm">
+                    {/* Mobile View (Cards) */}
+                    <div className="grid grid-cols-1 gap-4 md:hidden">
+                        {users.map((member: any) => {
+                            const isActive =
+                                member.membership?.status === 'ACTIVE' &&
+                                member.membership.expiryDate &&
+                                new Date(member.membership.expiryDate) > new Date();
+
+                            return (
+                                <div key={member.id} className="bg-card/50 backdrop-blur-sm border border-white/10 rounded-xl p-5 space-y-4">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h3 className="font-bold text-lg">{member.name}</h3>
+                                            <p className="text-sm text-muted-foreground break-all">{member.email}</p>
+                                        </div>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${isActive
+                                            ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                            : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                            }`}>
+                                            {isActive ? 'ACTIVE' : 'INACTIVE'}
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 text-sm py-3 border-y border-white/5">
+                                        <div>
+                                            <p className="text-muted-foreground text-xs uppercase tracking-wider">ID</p>
+                                            <p className="font-mono text-xs mt-1">{member.id.slice(-8).toUpperCase()}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-muted-foreground text-xs uppercase tracking-wider">Expires</p>
+                                            <p className="mt-1">
                                                 {member.membership?.expiryDate
-                                                    ? new Date(member.membership.expiryDate).toLocaleDateString(
-                                                        'en-IN'
-                                                    )
+                                                    ? new Date(member.membership.expiryDate).toLocaleDateString('en-IN')
                                                     : '-'}
-                                            </td>
-                                            <td className="p-4 text-sm">
+                                            </p>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <p className="text-muted-foreground text-xs uppercase tracking-wider">Last Payment</p>
+                                            <p className="mt-1">
                                                 {member.payments[0]
-                                                    ? `₹${member.payments[0].amount} on ${new Date(
-                                                        member.payments[0].createdAt
-                                                    ).toLocaleDateString('en-IN')}`
-                                                    : 'No payments'}
-                                            </td>
-                                            <td className="p-4">
-                                                <form action="/api/admin/toggle-membership" method="POST">
-                                                    <input type="hidden" name="userId" value={member.id} />
-                                                    <button
-                                                        type="submit"
-                                                        className="text-sm text-primary hover:underline"
-                                                    >
-                                                        {isActive ? 'Deactivate' : 'Activate'}
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                                    ? `₹${member.payments[0].amount} • ${new Date(member.payments[0].createdAt).toLocaleDateString('en-IN')}`
+                                                    : 'No history'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <form action="/api/admin/toggle-membership" method="POST" className="w-full">
+                                        <input type="hidden" name="userId" value={member.id} />
+                                        <button
+                                            type="submit"
+                                            className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-all ${isActive
+                                                ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
+                                                : 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20'
+                                                }`}
+                                        >
+                                            {isActive ? 'Deactivate Membership' : 'Activate Membership'}
+                                        </button>
+                                    </form>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Desktop View (Table) */}
+                    <div className="hidden md:block bg-card/50 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b border-white/10 bg-white/5">
+                                        <th className="text-left p-5 font-semibold text-sm text-muted-foreground">Member Details</th>
+                                        <th className="text-left p-5 font-semibold text-sm text-muted-foreground">Status</th>
+                                        <th className="text-left p-5 font-semibold text-sm text-muted-foreground">Membership Info</th>
+                                        <th className="text-left p-5 font-semibold text-sm text-muted-foreground">Last Payment</th>
+                                        <th className="text-right p-5 font-semibold text-sm text-muted-foreground">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {users.map((member: any) => {
+                                        const isActive =
+                                            member.membership?.status === 'ACTIVE' &&
+                                            member.membership.expiryDate &&
+                                            new Date(member.membership.expiryDate) > new Date();
+
+                                        return (
+                                            <tr key={member.id} className="hover:bg-white/5 transition-colors">
+                                                <td className="p-5">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                                                            {member.name?.[0]?.toUpperCase() || 'U'}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-white">{member.name}</p>
+                                                            <p className="text-sm text-muted-foreground">{member.email}</p>
+                                                            <p className="text-xs text-muted-foreground font-mono mt-0.5">ID: {member.id.slice(-8).toUpperCase()}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="p-5">
+                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${isActive
+                                                        ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                                                        : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                                        }`}>
+                                                        <div className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-green-400' : 'bg-red-400'}`} />
+                                                        {isActive ? 'Active' : 'Inactive'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-5">
+                                                    <div className="text-sm">
+                                                        <p className="text-muted-foreground text-xs">Expires On</p>
+                                                        <p className="font-medium mt-0.5">
+                                                            {member.membership?.expiryDate
+                                                                ? new Date(member.membership.expiryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                                                                : 'No active plan'}
+                                                        </p>
+                                                    </div>
+                                                </td>
+                                                <td className="p-5">
+                                                    <div className="text-sm">
+                                                        {member.payments[0] ? (
+                                                            <>
+                                                                <p className="font-medium">₹{member.payments[0].amount}</p>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    {new Date(member.payments[0].createdAt).toLocaleDateString('en-IN')}
+                                                                </p>
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-muted-foreground italic">No payments</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="p-5 text-right">
+                                                    <form action="/api/admin/toggle-membership" method="POST">
+                                                        <input type="hidden" name="userId" value={member.id} />
+                                                        <button
+                                                            type="submit"
+                                                            className={`text-sm font-medium hover:underline transition-all ${isActive ? 'text-red-400' : 'text-green-400'
+                                                                }`}
+                                                        >
+                                                            {isActive ? 'Deactivate' : 'Activate Access'}
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {users.length === 0 && (
-                        <div className="text-center py-12 text-muted-foreground">
-                            <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                            <p>No members found</p>
+                        <div className="text-center py-20 bg-card/30 border border-white/10 rounded-2xl">
+                            <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                            <h3 className="text-lg font-semibold">No members found</h3>
+                            <p className="text-muted-foreground">Try adjusting your search terms</p>
                         </div>
                     )}
                 </div>

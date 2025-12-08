@@ -2,7 +2,7 @@ import { BookOpen, MapPin, Phone, Mail } from 'lucide-react';
 
 export default function Footer() {
     return (
-        <footer className="bg-secondary text-secondary-foreground border-t border-border">
+        <footer className="bg-secondary text-secondary-foreground border-t border-border" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
             <div className="container mx-auto px-4 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div className="space-y-4">
@@ -30,11 +30,11 @@ export default function Footer() {
                         <ul className="space-y-2 text-sm text-muted-foreground">
                             <li className="flex items-center gap-2">
                                 <MapPin className="h-4 w-4" />
-                                <span>123 Student Lane, Study City</span>
+                                <span>442 , kamalpur brahman chopal</span>
                             </li>
                             <li className="flex items-center gap-2">
                                 <Phone className="h-4 w-4" />
-                                <span>+91 98765 43210</span>
+                                <span>+91 82952 95283</span>
                             </li>
                             <li className="flex items-center gap-2">
                                 <Mail className="h-4 w-4" />
@@ -59,6 +59,9 @@ export default function Footer() {
 
                 <div className="mt-12 pt-8 border-t border-border/50 text-center text-sm text-muted-foreground">
                     <p>&copy; {new Date().getFullYear()} Vats Library. All rights reserved.</p>
+                    <p className="mt-2 text-xs flex items-center justify-center gap-1">
+                        Made with <span className="text-red-500">❤️</span> by <span className="font-semibold text-foreground">Lavish Vats</span>
+                    </p>
                 </div>
             </div>
         </footer>

@@ -28,7 +28,8 @@ export default function DigitalPass({
         // Generate the full verification URL
         // Ensure we are on the client to access window
         if (typeof window !== 'undefined') {
-            setQrValue(`${window.location.origin}/verify/${fullId}`);
+            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+            setQrValue(`${baseUrl}/verify/${fullId}`);
         }
     }, [fullId]);
 

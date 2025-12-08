@@ -24,12 +24,28 @@
 }
 
 body {
-  background-color: var(--background);
   color: var(--foreground);
+  background-color: var(--background);
   font-family: 'Calibri', 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+  width: 100%;
+  background-color: var(--background);
+  margin: 0;
+  padding: 0;
 }
 
 /* Hero Section Typography */
@@ -300,5 +316,42 @@ button {
   50% {
     opacity: 0.5;
     transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+/* Orbit Animations */
+.animate-spin-slow {
+  animation: spin 20s linear infinite;
+}
+
+.animate-spin-reverse-slower {
+  animation: spin-reverse 35s linear infinite;
+}
+
+.animate-spin-slowest {
+  animation: spin 50s linear infinite;
+}
+
+.animate-spin-reverse-super-slow {
+  animation: spin-reverse 80s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+
+  to {
+    transform: rotate(0deg);
   }
 }

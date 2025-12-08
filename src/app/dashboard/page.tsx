@@ -2,7 +2,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import DigitalPass from '@/components/DigitalPass';
-import GPayButton from '@/components/GPayButton';
+import PaymentSection from '@/components/PaymentSection';
 import DashboardRedirect from '@/components/DashboardRedirect';
 import { Calendar, CreditCard, IndianRupee } from 'lucide-react';
 
@@ -48,14 +48,46 @@ export default async function DashboardPage() {
         membership.expiryDate &&
         new Date(membership.expiryDate) > new Date();
 
+    // Calculate Monthly Revenue (Same as Admin)
+    const currentMonthStart = new Date();
+    currentMonthStart.setDate(1);
+    currentMonthStart.setHours(0, 0, 0, 0);
+
+    const monthlyRevenue = await prisma.payment.aggregate({
+        _sum: {
+            amount: true,
+        },
+        where: {
+            status: 'SUCCESS',
+            createdAt: {
+                gte: currentMonthStart,
+            },
+        },
+    });
+
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 pt-28 pb-8 max-w-full overflow-x-hidden">
             <DashboardRedirect />
             <div className="max-w-6xl mx-auto">
-                <h1 className="text-3xl font-bold mb-2">My Dashboard</h1>
-                <p className="text-muted-foreground mb-8">
-                    Welcome back, {dbUser.name}!
-                </p>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <div>
+                        <h1 className="text-3xl font-bold mb-2">My Dashboard</h1>
+                        <p className="text-muted-foreground">
+                            Welcome back, {dbUser.name}!
+                        </p>
+                    </div>
+
+                    {/* Monthly Revenue Card for Users */}
+                    <div className="bg-card/50 backdrop-blur-sm border border-yellow-500/20 rounded-xl p-4 flex items-center gap-4 shadow-sm">
+                        <div className="bg-yellow-500/10 p-3 rounded-full">
+                            <IndianRupee className="h-6 w-6 text-yellow-600" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Library Revenue (This Month)</p>
+                            <p className="text-2xl font-bold text-yellow-600">₹{monthlyRevenue._sum.amount || 0}</p>
+                        </div>
+                    </div>
+                </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Left Column - Membership Status & Pass */}
@@ -112,10 +144,7 @@ export default async function DashboardPage() {
                                         Valid for 30 days from payment date
                                     </p>
                                 </div>
-                                <GPayButton />
-                                <p className="text-xs text-muted-foreground text-center">
-                                    Secure payment via Google Pay (UPI)
-                                </p>
+                                <PaymentSection />
                             </div>
                         </div>
                     </div>
@@ -150,7 +179,7 @@ export default async function DashboardPage() {
                             <h2 className="text-xl font-semibold mb-4">Payment History</h2>
                             {dbUser.payments.length > 0 ? (
                                 <div className="space-y-3">
-                                    {dbUser.payments.map((payment) => (
+                                    {dbUser.payments.map((payment: any) => (
                                         <div
                                             key={payment.id}
                                             className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg"
@@ -167,6 +196,9 @@ export default async function DashboardPage() {
                                                             month: 'short',
                                                             year: 'numeric',
                                                         })}
+                                                    </p>
+                                                    <p className="text-[10px] uppercase tracking-wider font-medium mt-1 text-muted-foreground/80">
+                                                        {payment.method === 'CASH' ? 'Cash' : 'Online (UPI)'}
                                                     </p>
                                                 </div>
                                             </div>

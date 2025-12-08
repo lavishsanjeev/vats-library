@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import GlowingGridBackground from "@/components/GlowingGridBackground";
+import PageLoader from "@/components/PageLoader";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import PageLoader from "@/components/PageLoader";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -21,7 +22,12 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
+        <head>
+          <meta name="theme-color" content="#030014" />
+          <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        </head>
         <body className={inter.className}>
+          <GlowingGridBackground />
           <PageLoader />
           <div className="flex flex-col min-h-screen">
             <Header />
