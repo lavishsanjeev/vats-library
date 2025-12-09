@@ -10,15 +10,15 @@ async function main() {
         process.exit(1);
     }
 
-    console.log(`Attempting to make ${email} an admin...`);
+    console.log(`Attempting to revoke admin access from ${email}...`);
 
     try {
         const user = await prisma.user.update({
             where: { email },
-            data: { role: 'ADMIN' },
+            data: { role: 'STUDENT' },
         });
 
-        console.log(`Success! User ${user.email} is now an ADMIN.`);
+        console.log(`Success! User ${user.email} is now a STUDENT.`);
     } catch (error) {
         console.error('Error updating user:', error);
     } finally {
